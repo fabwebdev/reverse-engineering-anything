@@ -27,10 +27,16 @@ try {
       )
     ).stdout,
   );
-  const packageResult = packed[0];
+  const packageResult = Array.isArray(packed)
+    ? packed[0]
+    : (packed?.["rea-agents"] ?? Object.values(packed ?? {})[0]);
+  const packageFilename =
+    typeof packageResult?.filename === "string"
+      ? packageResult.filename
+      : `${packageResult?.name}-${packageResult?.version}.tgz`;
   if (
     packageResult === undefined ||
-    typeof packageResult.filename !== "string" ||
+    typeof packageFilename !== "string" ||
     !Array.isArray(packageResult.files)
   )
     throw new Error(
@@ -46,7 +52,7 @@ try {
     if (!packagedPaths.has(required))
       throw new Error(`Windows package omitted ${required}`);
 
-  const tarball = join(workspace, packageResult.filename);
+  const tarball = join(workspace, packageFilename);
   await access(tarball);
   await npm(
     ["install", "--no-package-lock", "--no-save", "--prefix", prefix, tarball],
